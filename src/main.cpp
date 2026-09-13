@@ -1,5 +1,5 @@
 #include "platform.h"
-#include <sdl3/SDL_main.h>
+#include <SDL3/SDL_main.h>
 #include "SDLPhysFS.h"
 
 bool init();
