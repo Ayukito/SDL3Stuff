@@ -6,11 +6,11 @@ Plans are to make some sort of game, but I'm still just learning C++, makefiles,
 ### To-do:  
 - [x] Windows 
 - Port SDL3 usage to:
-- - [] Mac
-- - [] Linux
-- - [] Vita
-- - [] Switch
-- - [] iOS
+    - [] Mac
+    - [] Linux
+    - [] Vita
+    - [] Switch
+    - [] iOS
 - [ ] Android
 - [ ] PSP
 - [ ] 3DS
