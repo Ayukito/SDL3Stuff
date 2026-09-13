@@ -16,10 +16,12 @@
         {
             "name": "Windows",
             "includePath": [
+                "${workspaceFolder}/**",
                 "${workspaceFolder}/deps/include/",
                 "${workspaceFolder}/deps/Windows/include/"
             ],
             "defines": [],
+            "compilerPath": "C:/msys64/mingw64/bin/g++.exe",
             "cStandard": "c17",
             "cppStandard": "c++17",
             "intelliSenseMode": "windows-gcc-x64"
@@ -28,12 +30,13 @@
             "name": "Mac",
             "includePath": [
                 "${workspaceFolder}/deps/include/",
-                "${workspaceFolder}/deps/MacOS/include/"
+                "${workspaceFolder}/deps/MacOS/include/",
+                "${workspaceFolder}/deps/Windows/include"
             ],
             "defines": [],
             "cStandard": "c17",
             "cppStandard": "gnu++17",
-            "intelliSenseMode": "macos-clang-x64"
+            "intelliSenseMode": "windows-gcc-x64"
         }
     ],
     "version": 4
