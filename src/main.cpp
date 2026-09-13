@@ -1,131 +1,128 @@
 #include "platform_include.h"
+#include <sdl3/SDL_main.h>
+#include "SDLPhysFS.h"
 
-using namespace std;
+bool init();
 
-string PHYSFS_readFile( string path){
-    string output;
-    PHYSFS_File* fp;
-    fp = PHYSFS_openRead(path.c_str());
-    if (fp){
-        //char buffer[PHYSFS_fileLength(fp)];
-        char buffer[128];
-        PHYSFS_sint64 rc;
-        do {
-            rc = PHYSFS_readBytes(fp, buffer, sizeof(buffer));
-            string s(buffer);
-            output += s.substr(0, rc);
-        } while (!(rc < sizeof(buffer)));
+void close();
+
+int main( int argc, char *args[] );
+
+void draw();
+
+SDL_Window* gWindow{ nullptr };
+
+SDL_Surface* gScreenSurface{ nullptr };
+
+bool exists{ false };
+
+bool init(){
+    //Initialization flag
+    bool success{ true };
+
+    //Initialize SDL
+    if( SDL_Init( SDL_INIT_VIDEO ) == false ){
+        SDL_Log( "SDL could not initialize! SDL error: %s\n", SDL_GetError() );
+        success = false;
     }
-    PHYSFS_close(fp);
+    else{
+        //Create window
+        if( gWindow = SDL_CreateWindow( "Testing", 1280, 720, 0 ); gWindow == nullptr ){
+            SDL_Log( "Window could not be created! SDL error: %s\n", SDL_GetError() );
+            success = false;
+        }
+        else{
+            //Get window surface
+            gScreenSurface = SDL_GetWindowSurface( gWindow );
+        }
+    }
 
-    return output;
+    return success;
 }
 
-char* file_read(const char* filename) {
-    SDL_RWops *rw = SDL_RWFromFile(filename, "rb");
-    if (rw == NULL) return NULL;
+void close(){
+    //Clean up surface
+    SDL_DestroySurface( gScreenSurface );
+    gScreenSurface = nullptr;
+    
+    //Destroy window
+    SDL_DestroyWindow( gWindow );
+    gWindow = nullptr;
+    gScreenSurface = nullptr;
 
-    Sint64 res_size = SDL_RWsize(rw);
-    char* res = (char*)malloc(res_size + 1);
-
-    Sint64 nb_read_total = 0, nb_read = 1;
-    char* buf = res;
-    while (nb_read_total < res_size && nb_read != 0) {
-        nb_read = SDL_RWread(rw, buf, 1, (res_size - nb_read_total));
-        nb_read_total += nb_read;
-        buf += nb_read;
-    }
-    SDL_RWclose(rw);
-    if (nb_read_total != res_size) {
-        free(res);
-        return NULL;
-    }
-
-    res[nb_read_total] = '\0';
-    return res;
-}
-
-int main( int argc, char *argv[] ){
-    // Need to initialize these two on switch specifically, otherwise nothing happens
-    if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_JOYSTICK) < 0){
-        SDL_Log("There was an error initilizing SDL! SDL_Error: %s\n", SDL_GetError());
-        return 0;
-    };
-
-    SDL_Window *window;
-
-    window = SDL_CreateWindow(  "Testing!",
-                                SDL_WINDOWPOS_UNDEFINED,
-                                SDL_WINDOWPOS_UNDEFINED,
-                                1280,
-                                720,
-                                SDL_WINDOW_RESIZABLE | SDL_WINDOW_ALLOW_HIGHDPI | SDL_WINDOW_SHOWN );
-    if (window == NULL){
-        SDL_Log("There was an error initilizing the SDL Window! SDL_Error: %s\n", SDL_GetError());
-        return 0;
-    };
-    SDL_Log("Test2222");
-    SDL_Renderer *renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC);
-
-    SDL_SetRenderDrawColor(renderer, 255, 0, 0, 255);
-    SDL_RenderClear(renderer);
-    SDL_RenderPresent(renderer);
-
-    PHYSFS_init(NULL);
-
-#ifdef __SWITCH__
-        romfsInit();
-        socketInitializeDefault();
-        nxlinkStdio();
-#endif
-
-    int res;
-
-    SDL_Log("Base Path: %s", GetBasePath().c_str());
-    char* file = file_read("Assets/test.txt");
-    SDL_Log("file: %s", file);
-    //ToDo: Use SDL RWops on Android instead of physfs, make filesystem wrapper. Use PHYSFS_mountMemory if using .zip to mount
-    string tmp = GetBasePath() + "Assets";
-    char *array = &tmp[0];
-    res = PHYSFS_mount(array, "/", 1);
-    SDL_Log("Mounted: %d", res);
-    if (res == 0){
-        SDL_Log("PhysFS Error: %s", PHYSFS_getErrorByCode(PHYSFS_getLastErrorCode()));
-    }
-
-    bool exists = false;
-
-    exists = PHYSFS_exists("/test.txt");
-    SDL_Log("Exists: %d", exists?1:0);
-
-    string txt = PHYSFS_readFile("/test.txt");
-    SDL_Log("Text: %s", txt.c_str());
-
-    SDL_Event event;
-    bool running = true;
-
-    while ( running ) {
-        while (SDL_PollEvent(&event)) {
-            if ( event.type == SDL_QUIT){
-                running = false;
-                break;
-            }
-        }
-        if (exists){
-            SDL_SetRenderDrawColor(renderer, 0, 0, 255, 255);
-        }else{
-            SDL_SetRenderDrawColor(renderer, 255, 0, 0, 255);
-        }
-
-        SDL_RenderClear(renderer);
-        SDL_RenderPresent(renderer);
-        SDL_Delay(1000/60);
-        //cout << PHYSFS_isInit() << endl;
-        /* do some other stuff here -- draw your app, etc. */
-    }
-    SDL_DestroyRenderer(renderer);
-    SDL_DestroyWindow(window);
-    SDL_Quit();
     PHYSFS_deinit();
-    return 0;
+
+    //Quit SDL subsystems
+    SDL_Quit();
+}
+
+int main( int argc, char *args[] ){
+    //Final exit code
+    int exitCode{ 0 };
+
+    //Initialize
+    if( init() == false ){
+        SDL_Log( "Unable to initialize program!\n" );
+        exitCode = 1;
+    }
+    else{
+        // test
+        SDL_FillSurfaceRect( gScreenSurface, nullptr, SDL_MapSurfaceRGB( gScreenSurface, 255, 0, 0 ) );
+        SDL_UpdateWindowSurface( gWindow );
+
+        PHYSFS_init(NULL);
+
+        #ifdef __SWITCH__
+                romfsInit();
+                socketInitializeDefault();
+                nxlinkStdio();
+        #endif
+
+        exists = SDLPhysFS::PhysFS_DummyRead();
+
+        //The quit flag
+        bool quit{ false };
+
+        //The event data
+        SDL_Event e;
+        SDL_zero( e );
+        
+        //The main loop
+        while( quit == false )
+        {
+            //Get event data
+            while( SDL_PollEvent( &e ) == true )
+            {
+                //If event is quit type
+                if( e.type == SDL_EVENT_QUIT )
+                {
+                    //End the main loop
+                    quit = true;
+                }
+            }
+
+            draw();
+
+            SDL_Delay( 16 ); // ~60fps
+        } 
+
+    }
+
+    //Clean up
+    close();
+
+    return exitCode;
+}
+
+void draw(){
+    //Fill the surface
+    if(exists){
+        SDL_FillSurfaceRect( gScreenSurface, nullptr, SDL_MapSurfaceRGB( gScreenSurface, 0, 0, 255 ) );
+    }
+    else{
+        SDL_FillSurfaceRect( gScreenSurface, nullptr, SDL_MapSurfaceRGB( gScreenSurface, 255, 0, 0 ) );
+    }
+    
+    //Update the surface
+    SDL_UpdateWindowSurface( gWindow );
 }
