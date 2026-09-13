@@ -60,7 +60,7 @@ else ifeq ($(uname_S), Darwin)
     STD := -std=gnu17
     INCDIR += -I$(MACDIR)/include
     LIBDIR += -L$(MACDIR)/lib
-    LDFLAGS := -F$(MACDIR)/Frameworks -Wl,-rpath,@executable_path/../Frameworks -framework SDL2
+    LDFLAGS := -F$(MACDIR)/Frameworks -Wl,-rpath,@executable_path/../Frameworks -framework SDL3
     LDFLAGS += ./deps/MacOS/lib/libphysfs.a # Static link to physfs, installed with brew
     LDFLAGS += -Wl,-framework,CoreFoundation -Wl,-framework,IOKit -Wl,-framework,Foundation # Frameworks for physfs
     CXXFLAGS += -mmacosx-version-min=10.9 # target MacOS 10.9
@@ -68,8 +68,8 @@ else ifeq ($(uname_S), Linux)
     #LIBGL = -lGL -lglut
     build_target := all_linux
     STD := -std=gnu17
-    LDFLAGS := $(shell sdl2-config --libs)  -lphysfs
-    CXXFLAGS += $(shell sdl2-config --cflags) -no-pie
+    LDFLAGS := $(shell sdl3-config --libs)  -lphysfs
+    CXXFLAGS += $(shell sdl3-config --cflags) -no-pie
 endif
 
 LDFLAGS += $(LIBGL)

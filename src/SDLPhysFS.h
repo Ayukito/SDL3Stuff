@@ -1,14 +1,12 @@
 #ifndef SDLPhysFS_h
 #define SDLPhysFS_h
 
-#include "platform_include.h"
+#include "platform.h"
 
 namespace SDLPhysFS{
-    string PHYSFS_readFile( string path);
+    std::string readFile(const std::string& path);
 
-    char* file_read(const char* filename);
-
-    bool PhysFS_DummyRead();
+    bool dummyRead();
 }
 
 #endif

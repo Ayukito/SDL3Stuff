@@ -1,10 +1,8 @@
-#ifndef platform_include
-#define platform_include
+#ifndef platform_h
+#define platform_h
 
-#include <iostream>
 #include <string>
-#include <string.h>
-using namespace std;
+
 #ifdef _WIN64
     //define something for Windows (64-bit)
 #elifdef _WIN32
@@ -37,12 +35,12 @@ using namespace std;
     #include <SDL3/SDL.h>
 #endif
 
-inline string GetBasePath(){
+inline std::string getBasePath(){
     #if defined(__SWITCH__) || defined(SDL_PLATFORM_3DS)
         return "romfs:/"; // The Switch SDL doesn't seem to want to work properly, the following function just crashes the system .-.
     #elifdef SDL_PLATFORM_ANDROID
         return "";
     #endif
-    return string(SDL_GetBasePath());
+    return std::string(SDL_GetBasePath());
 }
 #endif

@@ -1,4 +1,4 @@
-#include "platform_include.h"
+#include "platform.h"
 #include <sdl3/SDL_main.h>
 #include "SDLPhysFS.h"
 
@@ -15,6 +15,10 @@ SDL_Window* gWindow{ nullptr };
 SDL_Surface* gScreenSurface{ nullptr };
 
 bool exists{ false };
+
+
+
+
 
 bool init(){
     //Initialization flag
@@ -42,16 +46,14 @@ bool init(){
 
 void close(){
     //Clean up surface
-    SDL_DestroySurface( gScreenSurface );
     gScreenSurface = nullptr;
     
     //Destroy window
     SDL_DestroyWindow( gWindow );
     gWindow = nullptr;
-    gScreenSurface = nullptr;
-
-    PHYSFS_deinit();
-
+    if (PHYSFS_isInit()) {
+        PHYSFS_deinit();
+    }
     //Quit SDL subsystems
     SDL_Quit();
 }
@@ -70,42 +72,43 @@ int main( int argc, char *args[] ){
         SDL_FillSurfaceRect( gScreenSurface, nullptr, SDL_MapSurfaceRGB( gScreenSurface, 255, 0, 0 ) );
         SDL_UpdateWindowSurface( gWindow );
 
-        PHYSFS_init(NULL);
-
-        #ifdef __SWITCH__
+        if (PHYSFS_init(NULL)){
+            #ifdef __SWITCH__
                 romfsInit();
                 socketInitializeDefault();
                 nxlinkStdio();
-        #endif
+            #endif
 
-        exists = SDLPhysFS::PhysFS_DummyRead();
+            exists = SDLPhysFS::dummyRead();
 
-        //The quit flag
-        bool quit{ false };
+            //The quit flag
+            bool quit{ false };
 
-        //The event data
-        SDL_Event e;
-        SDL_zero( e );
-        
-        //The main loop
-        while( quit == false )
-        {
-            //Get event data
-            while( SDL_PollEvent( &e ) == true )
+            //The event data
+            SDL_Event e;
+            SDL_zero( e );
+            
+            //The main loop
+            while( quit == false )
             {
-                //If event is quit type
-                if( e.type == SDL_EVENT_QUIT )
+                //Get event data
+                while( SDL_PollEvent( &e ) == true )
                 {
-                    //End the main loop
-                    quit = true;
+                    //If event is quit type
+                    if( e.type == SDL_EVENT_QUIT )
+                    {
+                        //End the main loop
+                        quit = true;
+                    }
                 }
-            }
 
-            draw();
+                draw();
 
-            SDL_Delay( 16 ); // ~60fps
-        } 
-
+                SDL_Delay( 16 ); // ~60fps
+            } 
+        } else{
+            SDL_Log("PhysFS Error: %s", PHYSFS_getErrorByCode(PHYSFS_getLastErrorCode()));
+        }
     }
 
     //Clean up
