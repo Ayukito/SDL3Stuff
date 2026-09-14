@@ -67,9 +67,9 @@ else ifeq ($(uname_S), Darwin)
 else ifeq ($(uname_S), Linux)
     #LIBGL = -lGL -lglut
     build_target := all_linux
-    STD := -std=gnu17
-    LDFLAGS := /usr/local/lib/libSDL3.a /usr/local/lib/libphysfs.a
-    CXXFLAGS += /usr/local/lib/libSDL3.a -no-pie
+    STD := -std=gnu++17
+    LDFLAGS := /usr/local/lib/libSDL3.a /usr/local/lib/libphysfs.a -ldl
+    CXXFLAGS += /usr/local/lib/libSDL3.a -no-pie -ldl
 endif
 
 LDFLAGS += $(LIBGL)
