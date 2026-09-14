@@ -68,8 +68,8 @@ else ifeq ($(uname_S), Linux)
     #LIBGL = -lGL -lglut
     build_target := all_linux
     STD := -std=gnu17
-    LDFLAGS := $(shell pkg-config sdl3 --libs)  -lphysfs
-    CXXFLAGS += $(shell pkg-config sdl3 --cflags) -no-pie
+    LDFLAGS := /usr/local/lib/libSDL3.a /usr/local/lib/libphysfs.a
+    CXXFLAGS += /usr/local/lib/libSDL3.a -no-pie
 endif
 
 LDFLAGS += $(LIBGL)
