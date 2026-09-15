@@ -33,6 +33,8 @@ Build definitions live at the repo root: `makefile` (Windows/macOS/Linux), `Swit
 - **[SDL3_image](https://github.com/libsdl-org/SDL_image)** — PNG loading for `Sprite`. Currently vendored for **Windows only**; other platforms still need this added under `deps/<Platform>/` before sprite loading will work there.
 - **[PhysFS](https://icculus.org/physfs/)** — mounts `Assets/` as a virtual filesystem so game code reads assets through a portable path (`/sprite.png`) instead of platform-specific filesystem paths.
 
+SDL3, SDL3_image, and PhysFS are all licensed under the [zlib license](https://opensource.org/license/zlib); see `deps/Windows/include/SDL3/LICENSE.txt`, `deps/Windows/include/SDL3_image/LICENSE.txt`, and `deps/include/PhysFS/LICENSE.txt`.
+
 ## Building
 
 ### Windows
