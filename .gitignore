@@ -58,3 +58,4 @@ DerivedData/
 .vscode/settings.json
 *.gradle
 *.idea
+.claude/

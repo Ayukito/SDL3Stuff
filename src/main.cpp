@@ -1,17 +1,12 @@
-#include "platform.h"
+#include "engine/platform.h"
 #include <SDL3/SDL_main.h>
-#include "SDLPhysFS.h"
-#include "Renderer.h"
-#include "Viewport.h"
-#include "Sprite.h"
+#include "engine/Renderer.h"
+#include "game/Game.h"
 
 SDL_Window* gWindow{ nullptr };
 
 Renderer gRenderer;
-Viewport gViewport;
-Sprite gTestSprite;
-
-bool exists{ false };
+Game gGame;
 
 std::string gAssetsPath;
 
@@ -36,17 +31,13 @@ bool init(){
         else if( gRenderer.init( gWindow ) == false ){
             success = false;
         }
-        else{
-            //Centered sub-rect, smaller than the window, to make the viewport's effect visible
-            gViewport.set( 240, 135, 800, 450 );
-        }
     }
 
     return success;
 }
 
 void close(){
-    gTestSprite.destroy();
+    gGame.destroy();
     gRenderer.destroy();
 
     //Destroy window
@@ -61,26 +52,6 @@ void close(){
     }
     //Quit SDL subsystems
     SDL_Quit();
-}
-
-void draw(){
-    //Clear the screen
-    if(exists){
-        gRenderer.clear( 0, 0, 255 );
-    }
-    else{
-        gRenderer.clear( 255, 0, 0 );
-    }
-
-    gViewport.apply( gRenderer );
-
-    //Draw the test sprite centered within the viewport
-    const SDL_Rect& viewportRect = gViewport.getRect();
-    float x = ( viewportRect.w - gTestSprite.getWidth() ) / 2.0f;
-    float y = ( viewportRect.h - gTestSprite.getHeight() ) / 2.0f;
-    gTestSprite.draw( gRenderer, x, y );
-
-    gRenderer.present();
 }
 
 int main( int argc, char *args[] ){
@@ -110,9 +81,7 @@ int main( int argc, char *args[] ){
                 SDL_Log( "PhysFS Error: %s", PHYSFS_getErrorByCode( PHYSFS_getLastErrorCode() ) );
             }
 
-            exists = SDLPhysFS::dummyRead();
-
-            gTestSprite.load( gRenderer, "/sprite.png" );
+            gGame.init( gRenderer );
 
             //The quit flag
             bool quit{ false };
@@ -135,7 +104,7 @@ int main( int argc, char *args[] ){
                     }
                 }
 
-                draw();
+                gGame.draw( gRenderer );
 
                 SDL_Delay( 16 ); // ~60fps
             }
