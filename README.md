@@ -13,7 +13,7 @@ src/
 └── game/        # actual game logic (just a demo scene right now)
 
 Assets/     # mounted into PhysFS at runtime
-deps/       # vendored third-party stuff, per platform where needed
+deps/       # vendored third-party stuff, per platform where still needed
 cmake/      # vendored ios.toolchain.cmake
 old/        # previous AndroidProject/Xcode.xcodeproj, kept around for reference
 ```
@@ -42,7 +42,7 @@ cmake --build --preset windows-debug
 
 Or the old-fashioned way: `make`
 
-Both produce the same thing. CMake's the one I actually use; the makefile still works and is kept around for now. SDL3/SDL3_image come from MSYS2; PhysFS has no MSYS2 package, so it's built straight from the vendored source into `physfs.dll` as part of the build, rather than linking a prebuilt copy.
+Both produce the same thing. CMake's the one I actually use; the makefile still works and is kept around for now. SDL3/SDL3_image come from MSYS2; PhysFS has no MSYS2 package, so it's built straight from the vendored source into `physfs.dll` as part of the build, rather than linking a prebuilt copy. The MinGW runtime DLLs (`libgcc_s_seh-1`, `libstdc++-6`, `libwinpthread-1`) get pulled straight from the MSYS2 install too.
 
 In VS Code: install the CMake Tools extension, open the folder, pick a preset from the status bar. Should just work.
 

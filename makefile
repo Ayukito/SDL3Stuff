@@ -19,7 +19,6 @@ DEBUG = true
 
 BUILDDIR=./build
 MACDIR=./deps/MacOS
-WINDIR=./deps/Windows
 LNXDIR=./deps/Linux
 MINGWBINDIR=C:/msys64/mingw64/bin
 
@@ -51,10 +50,12 @@ ifeq ($(uname_S), Windows)
     build_target := all_windows
     STD := -std=c17
     # SDL3/SDL3_image come from MSYS2's mingw-w64 packages (pacman -S mingw-w64-x86_64-sdl3
-    # mingw-w64-x86_64-sdl3-image) rather than deps/Windows/include — g++ already searches its
-    # own mingw64/include by default, so no -I is needed for them. PhysFS has no MSYS2 package,
-    # so instead of a prebuilt DLL it's built straight into $(BUILDDIR) from the vendored
-    # source (see $(BUILDDIR)/libphysfs.dll below) and linked from there.
+    # mingw-w64-x86_64-sdl3-image) — g++ already searches its own mingw64/include by default,
+    # so no -I is needed for them. PhysFS has no MSYS2 package, so instead of a prebuilt DLL
+    # it's built straight into $(BUILDDIR) from the vendored source (see
+    # $(BUILDDIR)/libphysfs.dll below) and linked from there. Nothing under deps/Windows/ is
+    # vendored anymore — the `windows:` target below pulls SDL3/SDL3_image and the MinGW
+    # runtime DLLs (libgcc_s_seh-1/libstdc++-6/libwinpthread-1) straight from $(MINGWBINDIR).
     LIBDIR += -L$(BUILDDIR)
 	ifeq ($(DYNAMIC), true)
         PHYSFS_LIB_DEP := $(BUILDDIR)/libphysfs.dll
@@ -115,8 +116,8 @@ mac: osxapp
 
 windows:
     ifeq ($(DYNAMIC), true)
-		cp $(WINDIR)/lib/*.dll $(BUILDDIR)
 		cp $(MINGWBINDIR)/SDL3.dll $(MINGWBINDIR)/SDL3_image.dll $(BUILDDIR)
+		cp $(MINGWBINDIR)/libgcc_s_seh-1.dll $(MINGWBINDIR)/libstdc++-6.dll $(MINGWBINDIR)/libwinpthread-1.dll $(BUILDDIR)
     endif
 	cp -R ./Assets $(BUILDDIR)
 

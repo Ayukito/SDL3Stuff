@@ -103,7 +103,11 @@ elseif(WIN32)
     endif()
     target_include_directories(physfs PRIVATE "${CMAKE_SOURCE_DIR}/deps/include/PhysFS")
 
-    set(WINDIR "${CMAKE_SOURCE_DIR}/deps/Windows")
+    # libgcc_s_seh-1.dll/libstdc++-6.dll/libwinpthread-1.dll ship with the MinGW-w64 toolchain
+    # itself (not something we build) — pulled straight from wherever this build's compiler
+    # lives, rather than vendoring a copy that could drift out of sync with the actual
+    # compiler version in use.
+    get_filename_component(MINGW_BIN_DIR "${CMAKE_CXX_COMPILER}" DIRECTORY)
 
     if(BUILD_STATIC)
         # SDL3::SDL3 / SDL3_image::SDL3_image alias to the *shared* target by default (see
@@ -128,12 +132,14 @@ elseif(WIN32)
         )
     else()
         # physfs.dll is built straight into bin/ alongside game.exe (see its
-        # RUNTIME_OUTPUT_DIRECTORY above), so only the MinGW runtime DLLs and
-        # SDL3/SDL3_image (resolved via their imported CMake targets) need copying here.
-        file(GLOB WIN_RUNTIME_DLLS "${WINDIR}/lib/*.dll")
+        # RUNTIME_OUTPUT_DIRECTORY above); SDL3/SDL3_image are resolved via their imported
+        # CMake targets; the MinGW runtime DLLs come from the compiler's own directory (see
+        # MINGW_BIN_DIR above) — nothing here is vendored in the repo.
         add_custom_command(TARGET game POST_BUILD
             COMMAND ${CMAKE_COMMAND} -E copy_if_different
-                    ${WIN_RUNTIME_DLLS}
+                    "${MINGW_BIN_DIR}/libgcc_s_seh-1.dll"
+                    "${MINGW_BIN_DIR}/libstdc++-6.dll"
+                    "${MINGW_BIN_DIR}/libwinpthread-1.dll"
                     "$<TARGET_FILE:SDL3::SDL3>"
                     "$<TARGET_FILE:SDL3_image::SDL3_image>"
                     "$<TARGET_FILE_DIR:game>"
