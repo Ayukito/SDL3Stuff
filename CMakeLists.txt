@@ -78,27 +78,58 @@ elseif(WIN32)
     # a proper CMake config (confirmed: SDL3Config.cmake/SDL3_imageConfig.cmake under
     # mingw64/lib/cmake/), so this is the same find_package() pattern as the macOS/Homebrew
     # branch. MinGW64's g++ already searches its own include/lib dirs by default, so no
-    # explicit -I/-L is needed for them. PhysFS has no MSYS2 package, so it's still vendored.
+    # explicit -I/-L is needed for them.
     find_package(SDL3 REQUIRED CONFIG)
     find_package(SDL3_image REQUIRED CONFIG)
 
+    # PhysFS has no MSYS2 package, and rather than keep a prebuilt libphysfs.dll vendored in
+    # deps/Windows/lib, it's built directly from the vendored source in deps/include/PhysFS —
+    # the same source Android already compiles from (see the ANDROID branch above). SHARED by
+    # default to match SDL3/SDL3_image's dynamic linking here; BUILD_STATIC switches it to a
+    # static lib instead, which finally makes a real fully-static Windows build possible (this
+    # used to be a dead end, since only a prebuilt .dll existed and no static import lib).
+    file(GLOB PHYSFS_WIN_SRCS "${CMAKE_SOURCE_DIR}/deps/include/PhysFS/*.c")
+    if(BUILD_STATIC)
+        add_library(physfs STATIC ${PHYSFS_WIN_SRCS})
+    else()
+        add_library(physfs SHARED ${PHYSFS_WIN_SRCS})
+        # physfs.h's PHYSFS_DECL only requests __declspec(dllexport) for MSVC (_MSC_VER); for
+        # GCC/MinGW it falls back to __attribute__((visibility("default"))), which doesn't
+        # populate a Windows export table on its own. --export-all-symbols makes MinGW's
+        # linker export every global symbol instead, the same way it would by default anyway
+        # for a DLL with no explicit exports — made explicit here rather than relied upon.
+        target_link_options(physfs PRIVATE -Wl,--export-all-symbols)
+        set_target_properties(physfs PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin")
+    endif()
+    target_include_directories(physfs PRIVATE "${CMAKE_SOURCE_DIR}/deps/include/PhysFS")
+
     set(WINDIR "${CMAKE_SOURCE_DIR}/deps/Windows")
-    target_link_directories(game PRIVATE "${WINDIR}/lib")
-    target_link_libraries(game PRIVATE mingw32 SDL3::SDL3 SDL3_image::SDL3_image physfs)
+
+    if(BUILD_STATIC)
+        # SDL3::SDL3 / SDL3_image::SDL3_image alias to the *shared* target by default (see
+        # SDL3Config.cmake) — link the -static variants explicitly, or -static below would
+        # just add system-lib flags on top of a still-dynamically-linked SDL3.
+        target_link_libraries(game PRIVATE mingw32 SDL3::SDL3-static SDL3_image::SDL3_image-static physfs)
+    else()
+        target_link_libraries(game PRIVATE mingw32 SDL3::SDL3 SDL3_image::SDL3_image physfs)
+    endif()
 
     target_compile_options(game PRIVATE $<$<NOT:$<CONFIG:Debug>>:-w>)
     target_link_options(game PRIVATE $<$<NOT:$<CONFIG:Debug>>:-Wl,-subsystem,windows>)
 
     if(BUILD_STATIC)
-        # No static PhysFS import lib is vendored for Windows (only libphysfs.dll),
-        # so this mirrors the makefile's DYNAMIC=false path as-is, including that limitation.
+        # -luuid: the static SDL3 references some COM interface GUIDs (IID_ITaskbarList3,
+        # IID_IShellItem, GUID_NULL) that only libuuid provides — without it this fails to
+        # link. Confirmed via the equivalent makefile DYNAMIC=false path hitting the same
+        # missing-symbol error first.
         target_link_options(game PRIVATE
             -static -lkernel32 -ladvapi32 -lgdi32 -limm32 -lmsvcrt
-            -lole32 -loleaut32 -lsetupapi -lshell32 -luser32 -lversion -lwinmm
+            -lole32 -loleaut32 -lsetupapi -lshell32 -luser32 -lversion -lwinmm -luuid
         )
     else()
-        # PhysFS's DLL is still vendored; SDL3/SDL3_image's now come straight from the
-        # MSYS2 install via their imported CMake targets' resolved DLL locations.
+        # physfs.dll is built straight into bin/ alongside game.exe (see its
+        # RUNTIME_OUTPUT_DIRECTORY above), so only the MinGW runtime DLLs and
+        # SDL3/SDL3_image (resolved via their imported CMake targets) need copying here.
         file(GLOB WIN_RUNTIME_DLLS "${WINDIR}/lib/*.dll")
         add_custom_command(TARGET game POST_BUILD
             COMMAND ${CMAKE_COMMAND} -E copy_if_different

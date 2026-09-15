@@ -28,7 +28,7 @@ Build files at the root: `CMakeLists.txt` + `CMakePresets.json` (Windows/macOS/L
 - **SDL3_image** — PNG loading
 - **PhysFS** — mounts `Assets/` as a virtual filesystem, so the game reads `/sprite.png` instead of dealing with per-platform paths
 
-All three are zlib-licensed. Where they come from depends on the platform — package manager where possible (MSYS2 on Windows, Homebrew on macOS, apt on Linux, the official AAR on Android), vendored in `deps/` otherwise. PhysFS doesn't have a package anywhere I'm targeting, so it's vendored everywhere.
+All three are zlib-licensed. Where they come from depends on the platform — package manager where possible (MSYS2 on Windows, Homebrew on macOS, apt on Linux, the official AAR on Android), vendored source otherwise. PhysFS doesn't have a package anywhere I'm targeting, so on Windows/Android it's compiled straight from the vendored source in `deps/include/PhysFS/` instead of linking a prebuilt copy; other platforms still link a prebuilt static lib.
 
 ## Building
 
@@ -42,9 +42,11 @@ cmake --build --preset windows-debug
 
 Or the old-fashioned way: `make`
 
-Both produce the same thing. CMake's the one I actually use; the makefile still works and is kept around for now. SDL3/SDL3_image come from MSYS2; PhysFS is still vendored in `deps/Windows/` since there's no package for it.
+Both produce the same thing. CMake's the one I actually use; the makefile still works and is kept around for now. SDL3/SDL3_image come from MSYS2; PhysFS has no MSYS2 package, so it's built straight from the vendored source into `physfs.dll` as part of the build, rather than linking a prebuilt copy.
 
 In VS Code: install the CMake Tools extension, open the folder, pick a preset from the status bar. Should just work.
+
+There's also a `windows-release-static`/`DYNAMIC=false` build that statically links everything (SDL3, SDL3_image, PhysFS, the C++ runtime) into a single standalone `game.exe` — no DLLs to ship alongside it.
 
 ### macOS / Linux
 

@@ -1,10 +1,18 @@
 APPNAME = game
 
 CC = g++
+CC_C = gcc
 
 rwildcard=$(foreach d,$(wildcard $1*),$(call rwildcard,$d/,$2) $(filter $(subst *,%,$2),$d))
 src := $(call rwildcard, src/, *.cpp)
 obj = $(src:.cpp=.o)
+
+# Used on Windows to build physfs.dll straight from the vendored source, instead of linking a
+# prebuilt one (see the Windows branch below) — same source the CMake build already compiles
+# from. Uses CC_C (gcc), not CC (g++) — g++ compiles .c files as C++ regardless of extension,
+# which isn't what we want for third-party C source.
+physfs_src := $(call rwildcard, deps/include/PhysFS/, *.c)
+physfs_obj = $(physfs_src:.c=.o)
 
 DYNAMIC = true
 DEBUG = true
@@ -44,9 +52,15 @@ ifeq ($(uname_S), Windows)
     STD := -std=c17
     # SDL3/SDL3_image come from MSYS2's mingw-w64 packages (pacman -S mingw-w64-x86_64-sdl3
     # mingw-w64-x86_64-sdl3-image) rather than deps/Windows/include — g++ already searches its
-    # own mingw64/include by default, so no -I is needed for them. PhysFS has no MSYS2
-    # package, so its DLL is still vendored in deps/Windows/lib.
-    LIBDIR += -L$(WINDIR)/lib
+    # own mingw64/include by default, so no -I is needed for them. PhysFS has no MSYS2 package,
+    # so instead of a prebuilt DLL it's built straight into $(BUILDDIR) from the vendored
+    # source (see $(BUILDDIR)/libphysfs.dll below) and linked from there.
+    LIBDIR += -L$(BUILDDIR)
+	ifeq ($(DYNAMIC), true)
+        PHYSFS_LIB_DEP := $(BUILDDIR)/libphysfs.dll
+	else
+        PHYSFS_LIB_DEP := $(BUILDDIR)/libphysfs.a
+	endif
 	ifneq ($(DEBUG), true)
         CXXFLAGS+=-w -Wl,-subsystem,windows
 	endif
@@ -56,7 +70,7 @@ ifeq ($(uname_S), Windows)
         # Above links statically to only the necessary things
         # Uncomment it if your compiler isn't incompetent and makes the file size 13mb larger.
 	else
-        LDFLAGS += -static -lkernel32 -ladvapi32 -lgdi32 -limm32 -lmsvcrt -lole32 -loleaut32 -lsetupapi -lshell32 -luser32 -lversion -lwinmm
+        LDFLAGS += -static -lkernel32 -ladvapi32 -lgdi32 -limm32 -lmsvcrt -lole32 -loleaut32 -lsetupapi -lshell32 -luser32 -lversion -lwinmm -luuid
          # Above links everything statically
 	endif
 else ifeq ($(uname_S), Darwin)
@@ -109,12 +123,25 @@ windows:
 linux: 
 	cp -R ./Assets $(BUILDDIR)
 
-$(BUILDDIR)/$(APPNAME): $(obj)
+$(BUILDDIR)/$(APPNAME): $(obj) | $(PHYSFS_LIB_DEP)
 	$(CC) $(STD) $(CXXFLAGS) -o $@ $^ $(LDFLAGS)
 
 $(BUILDDIR):
 	rm -rf $(BUILDDIR)
 	mkdir $(BUILDDIR)
+
+deps/include/PhysFS/%.o: deps/include/PhysFS/%.c
+	$(CC_C) -O3 -I./deps/include/PhysFS -c -o $@ $<
+
+# Built from the vendored source instead of linking a prebuilt copy — see the Windows branch
+# above. -Wl,--export-all-symbols: physfs.h's PHYSFS_DECL only requests __declspec(dllexport)
+# for MSVC, so on MinGW this makes the linker export every symbol instead (what a DLL with no
+# explicit exports would do by default anyway; made explicit here).
+$(BUILDDIR)/libphysfs.dll: $(physfs_obj) | $(BUILDDIR)
+	$(CC_C) -shared -o $@ $^ -Wl,--export-all-symbols -Wl,--out-implib,$(BUILDDIR)/libphysfs.dll.a
+
+$(BUILDDIR)/libphysfs.a: $(physfs_obj) | $(BUILDDIR)
+	ar rcs $@ $^
 
 osxapp: $(MACDIR)/$(APPNAME).icns $(BUILDDIR) $(BUILDDIR)/$(APPNAME)
 	rm -rf $(APPBUNDLE)
@@ -156,4 +183,4 @@ vita:
 	make -f Vita.mk
 
 clean:
-	rm -f -R $(obj) $(BUILDDIR)
+	rm -f -R $(obj) $(physfs_obj) $(BUILDDIR)
