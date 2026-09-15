@@ -1,6 +1,7 @@
 #include "engine/platform.h"
 #include <SDL3/SDL_main.h>
 #include "engine/Renderer.h"
+#include "engine/SDLPhysFS.h"
 #include "game/Game.h"
 
 SDL_Window* gWindow{ nullptr };
@@ -68,7 +69,18 @@ int main( int argc, char *args[] ){
         gRenderer.clear( 255, 0, 0 );
         gRenderer.present();
 
-        if (PHYSFS_init(NULL)){
+        #ifdef SDL_PLATFORM_ANDROID
+            // On Android, PHYSFS_init() doesn't take argv0 — it expects a pointer to a valid
+            // PHYSFS_AndroidInit (JNIEnv* + Context jobject, both as void*), which it uses to
+            // query the app's data/cache directories. Must be called after SDL_Init(), since
+            // that's what sets up SDL's JNI env/activity references on Android.
+            PHYSFS_AndroidInit androidInit{ SDL_GetAndroidJNIEnv(), SDL_GetAndroidActivity() };
+            const char* physfsArgv0 = reinterpret_cast<const char*>( &androidInit );
+        #else
+            const char* physfsArgv0 = args[0];
+        #endif
+
+        if (PHYSFS_init(physfsArgv0)){
             #ifdef __SWITCH__
                 romfsInit();
                 socketInitializeDefault();
@@ -76,10 +88,7 @@ int main( int argc, char *args[] ){
             #endif
 
             //Mount the Assets directory for the lifetime of the app
-            gAssetsPath = getBasePath() + "Assets";
-            if( PHYSFS_mount( gAssetsPath.c_str(), "/", 1 ) == 0 ){
-                SDL_Log( "PhysFS Error: %s", PHYSFS_getErrorByCode( PHYSFS_getLastErrorCode() ) );
-            }
+            gAssetsPath = SDLPhysFS::mountAssets( getBasePath() + "Assets" );
 
             gGame.init( gRenderer );
 

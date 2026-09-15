@@ -1,0 +1,76 @@
+plugins {
+    id 'com.android.application'
+}
+
+android {
+    namespace = "org.sdl3stuff.game"
+    compileSdk = 35
+    ndkVersion = "28.2.13676358"
+
+    defaultConfig {
+        applicationId = "org.sdl3stuff.game"
+        minSdk = 24
+        targetSdk = 35
+        versionCode = 1
+        versionName = "1.0"
+
+        externalNativeBuild {
+            cmake {
+                // Points at the repo's single root CMakeLists.txt (shared with the
+                // Windows/macOS/Linux/iOS builds) instead of a separate jni/CMakeLists.txt copy.
+                arguments "-DANDROID_STL=c++_shared"
+                abiFilters "armeabi-v7a", "arm64-v8a", "x86", "x86_64"
+            }
+        }
+    }
+
+    // buildFeatures.prefab exposes the SDL3/SDL3_image AARs' native libs + CMake package
+    // config to our CMakeLists.txt via find_package(SDL3/SDL3_image CONFIG) — see INSTALL.md
+    // bundled in each AAR (app/libs/).
+    buildFeatures {
+        prefab true
+    }
+
+    externalNativeBuild {
+        cmake {
+            path "../../CMakeLists.txt"
+            version "3.22.1"
+        }
+    }
+
+    // Assets/ is shared with every other platform build in this repo (see root README), but
+    // unlike desktop it can't be packaged as raw files here: PhysFS can't mount a real
+    // filesystem path inside the APK. Instead it's zipped into Assets.zip and mounted from
+    // memory at runtime via SDLPhysFS::mountAssets() (see src/engine/SDLPhysFS.cpp).
+    sourceSets {
+        main {
+            assets.srcDirs = ["$buildDir/generated/assets"]
+        }
+    }
+
+    buildTypes {
+        release {
+            minifyEnabled false
+            proguardFiles getDefaultProguardFile("proguard-android.txt"), "proguard-rules.pro"
+        }
+    }
+
+    lint {
+        abortOnError = false
+    }
+}
+
+dependencies {
+    implementation files("libs/SDL3-3.4.16.aar")
+    implementation files("libs/SDL3_image-3.4.6.aar")
+}
+
+// Zips the shared root Assets/ into Assets.zip and adds it as a packaged APK asset, since
+// PhysFS mounts it from memory on Android instead of from a real path (see SDLPhysFS.h).
+tasks.register("zipAssets", Zip) {
+    from "../../Assets"
+    archiveFileName = "Assets.zip"
+    destinationDirectory = file("$buildDir/generated/assets")
+}
+
+preBuild.dependsOn zipAssets

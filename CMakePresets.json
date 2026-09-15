@@ -26,18 +26,51 @@
         },
         {
             "name": "macos-debug",
-            "displayName": "macOS Debug",
+            "displayName": "macOS Debug (universal, command-line build)",
             "generator": "Unix Makefiles",
             "binaryDir": "${sourceDir}/build/macos-debug",
-            "cacheVariables": { "CMAKE_BUILD_TYPE": "Debug" },
+            "cacheVariables": {
+                "CMAKE_BUILD_TYPE": "Debug",
+                "CMAKE_OSX_ARCHITECTURES": "x86_64;arm64",
+                "CMAKE_OSX_DEPLOYMENT_TARGET": "10.9"
+            },
             "condition": { "type": "equals", "lhs": "${hostSystemName}", "rhs": "Darwin" }
         },
         {
             "name": "macos-release",
             "inherits": "macos-debug",
-            "displayName": "macOS Release",
+            "displayName": "macOS Release (universal, command-line build)",
             "binaryDir": "${sourceDir}/build/macos-release",
             "cacheVariables": { "CMAKE_BUILD_TYPE": "Release" }
+        },
+        {
+            "name": "macos-xcode",
+            "inherits": "macos-debug",
+            "displayName": "macOS (generates SDL3Stuff.xcodeproj)",
+            "generator": "Xcode",
+            "binaryDir": "${sourceDir}/build/macos-xcode"
+        },
+        {
+            "name": "ios-device",
+            "displayName": "iOS Device (generates SDL3Stuff.xcodeproj)",
+            "generator": "Xcode",
+            "binaryDir": "${sourceDir}/build/ios-device",
+            "toolchainFile": "${sourceDir}/cmake/ios.toolchain.cmake",
+            "cacheVariables": {
+                "PLATFORM": "OS64",
+                "DEPLOYMENT_TARGET": "13.0"
+            },
+            "condition": { "type": "equals", "lhs": "${hostSystemName}", "rhs": "Darwin" }
+        },
+        {
+            "name": "ios-simulator",
+            "inherits": "ios-device",
+            "displayName": "iOS Simulator, Apple Silicon (generates SDL3Stuff.xcodeproj)",
+            "binaryDir": "${sourceDir}/build/ios-simulator",
+            "cacheVariables": {
+                "PLATFORM": "SIMULATORARM64",
+                "DEPLOYMENT_TARGET": "13.0"
+            }
         },
         {
             "name": "linux-debug",
@@ -61,6 +94,9 @@
         { "name": "windows-release-static", "configurePreset": "windows-release-static" },
         { "name": "macos-debug", "configurePreset": "macos-debug" },
         { "name": "macos-release", "configurePreset": "macos-release" },
+        { "name": "macos-xcode", "configurePreset": "macos-xcode" },
+        { "name": "ios-device", "configurePreset": "ios-device" },
+        { "name": "ios-simulator", "configurePreset": "ios-simulator" },
         { "name": "linux-debug", "configurePreset": "linux-debug" },
         { "name": "linux-release", "configurePreset": "linux-release" }
     ]

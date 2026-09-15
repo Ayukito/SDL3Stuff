@@ -56,6 +56,14 @@ DerivedData/
 
 *.DS_Store
 .vscode/settings.json
-*.gradle
+.gradle/
 *.idea
 .claude/
+
+# Android
+AndroidProject/local.properties
+AndroidProject/.gradle/
+AndroidProject/.cxx/
+AndroidProject/app/.cxx/
+AndroidProject/build/
+AndroidProject/app/build/

@@ -54,6 +54,34 @@ namespace SDLPhysFS{
         return output;
     }
 
+    std::string mountAssets(const std::string& assetsPath){
+#ifdef SDL_PLATFORM_ANDROID
+        const char* zipName = "Assets.zip";
+
+        size_t dataSize = 0;
+        void* data = SDL_LoadFile(zipName, &dataSize);
+        if (data == nullptr){
+            SDL_Log("SDLPhysFS: could not read %s from APK assets! SDL error: %s", zipName, SDL_GetError());
+            return {};
+        }
+
+        if (PHYSFS_mountMemory(data, static_cast<PHYSFS_uint64>(dataSize), SDL_free, zipName, "/", 1) == 0){
+            SDL_Log("PhysFS Error: %s", PHYSFS_getErrorByCode(PHYSFS_getLastErrorCode()));
+            SDL_free(data);
+            return {};
+        }
+
+        return zipName;
+#else
+        if (PHYSFS_mount(assetsPath.c_str(), "/", 1) == 0){
+            SDL_Log("PhysFS Error: %s", PHYSFS_getErrorByCode(PHYSFS_getLastErrorCode()));
+            return {};
+        }
+
+        return assetsPath;
+#endif
+    }
+
     bool dummyRead(){
         // char* file = file_read("Assets/test.txt");
         // SDL_Log("file: %s", file);
