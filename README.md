@@ -1,6 +1,6 @@
 # SDL3Stuff
 
-A cross-platform C++ game project built on **SDL3**, **SDL3_image**, and **PhysFS**, targeting Windows, macOS, Linux, iOS, Android, PSP, Vita, and Switch from a single `makefile`-driven build.
+A cross-platform C++ game project built on **SDL3**, **SDL3_image**, and **PhysFS**, targeting Windows, macOS, Linux, iOS, Android, PSP, Vita, and Switch. Windows/macOS/Linux build via CMake or the original makefile; the other platforms use their own platform-specific build files.
 
 This is a learning project — first time using SDL3, and still picking up C++ and makefiles along the way. Windows is the primary, actively-developed platform right now; the rest are in various states of catching up (see [Platform status](#platform-status)).
 
@@ -23,7 +23,7 @@ deps/<Platform>/   # Vendored third-party headers/libs per platform (SDL3, SDL3_
 build/             # Build output (gitignored)
 ```
 
-Build definitions live at the repo root: `makefile` (Windows/macOS/Linux), `Switch.mk`, `Vita.mk`, `Xcode.xcodeproj` (macOS/iOS), and `AndroidProject/` (Gradle).
+Build definitions live at the repo root: `CMakeLists.txt` + `CMakePresets.json` and `makefile` (both Windows/macOS/Linux), `Switch.mk`, `Vita.mk`, `Xcode.xcodeproj` (macOS/iOS), and `AndroidProject/` (Gradle).
 
 `engine/` code should stay generic and reusable; anything specific to this particular game belongs in `game/`.
 
@@ -37,7 +37,29 @@ SDL3, SDL3_image, and PhysFS are all licensed under the [zlib license](https://o
 
 ## Building
 
-### Windows
+Windows, macOS, and Linux can be built either with **CMake** (works in VS Code and the terminal) or with the original **makefile**. Both build the same `src/` tree and produce an equivalent binary — CMake is the newer, recommended path; the makefile is kept for compatibility and because Switch/Vita/iOS/Android still depend on their own build files (`Switch.mk`, `Vita.mk`, `Xcode.xcodeproj`, `AndroidProject/`), not on either of these.
+
+### CMake (Windows / macOS / Linux)
+
+`CMakeLists.txt` mirrors the makefile's per-platform logic (same include/lib paths under `deps/<Platform>/`, same linked libraries, same Windows DLL/Assets copying, same always-`-O3`-plus-optional-`-g3` flags). `CMakePresets.json` defines configure/build presets per platform and build type.
+
+**In VS Code:** install the *CMake Tools* extension, open this folder, and pick a preset (e.g. `windows-debug`) from the status bar — Configure/Build/Debug all work from there. `.vscode/settings.json` already points `cmake.sourceDirectory` at the repo root and defaults the generator to Ninja.
+
+**In a terminal** (Windows needs Ninja and CMake on `PATH` — both installable via MSYS2's `pacman -S mingw-w64-x86_64-cmake mingw-w64-x86_64-ninja`):
+
+```
+cmake --preset windows-debug
+cmake --build --preset windows-debug
+# binary + Assets/ + runtime DLLs land in build/windows-debug/bin/
+```
+
+Swap `windows-debug` for `windows-release`, `windows-release-static` (statically linked, no DLL copying — see the `BUILD_STATIC` caveat in `CMakeLists.txt`), `macos-debug`/`macos-release`, or `linux-debug`/`linux-release`. Unlike the makefile (see the [Windows build note](#windows) below), the CMake/Ninja path works fine from both PowerShell and Git Bash on Windows — it doesn't depend on the `OS` environment variable propagating into the build.
+
+The macOS and Linux CMake presets are translated from the makefile's logic but haven't been build-tested (this repo is developed on Windows) — see the comments in `CMakeLists.txt` for known caveats (e.g. macOS's `deps/MacOS` currently only vendors an SDL2 framework, not SDL3).
+
+### makefile (all platforms)
+
+#### Windows
 
 Builds with MinGW64 via MSYS2 (Visual Studio or a standalone MinGW should work too, with some adjustment).
 
@@ -49,7 +71,9 @@ Builds with MinGW64 via MSYS2 (Visual Studio or a standalone MinGW should work t
 make OS=Windows_NT
 ```
 
-### macOS
+**Note:** on this project's dev machine, `make` must be run from PowerShell, not Git Bash — Git Bash's MSYS `make` doesn't pass the `OS` environment variable through to the build, so it silently picks no build target. The CMake path above doesn't have this problem.
+
+#### macOS
 
 Builds with clang. SDL3 and PhysFS are installed via Homebrew; static libs targeting macOS 10.9 are included in `deps/MacOS/`. The makefile links statically and targets macOS 10.9.
 
@@ -57,7 +81,7 @@ Builds with clang. SDL3 and PhysFS are installed via Homebrew; static libs targe
 make
 ```
 
-### Linux
+#### Linux
 
 Builds with g++ against `libsdl3-dev` and `libphysfs-dev` from your package manager. Compiled with `-no-pie` — without it, the binary gets treated as a shared library for some reason. Static linking on Linux hasn't been tried yet.
 

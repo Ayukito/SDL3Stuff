@@ -22,6 +22,28 @@
             "detail": "Compiler: Make default"
         },
         {
+            "type": "shell",
+            "label": "CMake: Clean build folder",
+            "command": "rm -rf '${workspaceFolder}/build'",
+            "problemMatcher": [],
+            "group": "build",
+            "presentation": {
+                "reveal": "always",
+                "panel": "shared"
+            },
+            "detail": "Deletes the whole build/ directory (all CMake presets), like the makefile's 'make clean'. CMake Tools' own 'CMake: Clean' command only runs the generator's clean target inside the active preset and keeps CMakeCache.txt/build.ninja around; use this task instead for a full fresh start.",
+            "windows": {
+                "options": {
+                    "shell": {
+                        "executable": "C:\\msys64\\usr\\bin\\bash.exe",
+                        "args": [
+                            "-c"
+                        ]
+                    }
+                }
+            }
+        },
+        {
             "type": "cppbuild",
             "label": "C/C++: g++.exe build active file",
             "command": "C:/msys64/mingw64/bin/g++.exe",
