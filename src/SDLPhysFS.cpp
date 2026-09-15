@@ -28,11 +28,16 @@ namespace SDLPhysFS{
     }
 
     std::string readFile(const std::string& path){
+        PHYSFS_File* fp = PHYSFS_openRead(path.c_str());
         std::string output;
-        PHYSFS_File* fp;
-        fp = PHYSFS_openRead(path.c_str());
+
         if (fp){
-            char buffer[128];
+            PHYSFS_sint64 len = PHYSFS_fileLength(fp);
+            if (len > 0){
+                output.reserve(static_cast<size_t>(len));
+            }
+
+            char buffer[4096];
             PHYSFS_sint64 rc;
             do {
                 rc = PHYSFS_readBytes(fp, buffer, sizeof(buffer));
@@ -42,7 +47,7 @@ namespace SDLPhysFS{
                 }
 
                 output.append(buffer, static_cast<size_t>(rc));
-            } while (!(rc < static_cast<PHYSFS_sint64>(sizeof(buffer))));
+            } while (rc == static_cast<PHYSFS_sint64>(sizeof(buffer)));
             PHYSFS_close(fp);
         }
 
@@ -64,14 +69,16 @@ namespace SDLPhysFS{
             SDL_Log("PhysFS Error: %s", PHYSFS_getErrorByCode(PHYSFS_getLastErrorCode()));
         }
 
-        bool exists = false;
+        bool testFileExists = false;
 
-        exists = PHYSFS_exists("/test.txt");
-        SDL_Log("Exists: %d", exists?1:0);
+        testFileExists = PHYSFS_exists("/test.txt");
+        SDL_Log("Exists: %d", testFileExists?1:0);
 
         std::string txt = readFile("/test.txt");
         SDL_Log("Text: %s", txt.c_str());
 
-        return exists;
-    };
+        PHYSFS_unmount(tmp.c_str());
+
+        return testFileExists;
+    }
 }

@@ -2,14 +2,6 @@
 #include <SDL3/SDL_main.h>
 #include "SDLPhysFS.h"
 
-bool init();
-
-void close();
-
-int main( int argc, char *args[] );
-
-void draw();
-
 SDL_Window* gWindow{ nullptr };
 
 SDL_Surface* gScreenSurface{ nullptr };
@@ -56,6 +48,19 @@ void close(){
     }
     //Quit SDL subsystems
     SDL_Quit();
+}
+
+void draw(){
+    //Fill the surface
+    if(exists){
+        SDL_FillSurfaceRect( gScreenSurface, nullptr, SDL_MapSurfaceRGB( gScreenSurface, 0, 0, 255 ) );
+    }
+    else{
+        SDL_FillSurfaceRect( gScreenSurface, nullptr, SDL_MapSurfaceRGB( gScreenSurface, 255, 0, 0 ) );
+    }
+    
+    //Update the surface
+    SDL_UpdateWindowSurface( gWindow );
 }
 
 int main( int argc, char *args[] ){
@@ -115,17 +120,4 @@ int main( int argc, char *args[] ){
     close();
 
     return exitCode;
-}
-
-void draw(){
-    //Fill the surface
-    if(exists){
-        SDL_FillSurfaceRect( gScreenSurface, nullptr, SDL_MapSurfaceRGB( gScreenSurface, 0, 0, 255 ) );
-    }
-    else{
-        SDL_FillSurfaceRect( gScreenSurface, nullptr, SDL_MapSurfaceRGB( gScreenSurface, 255, 0, 0 ) );
-    }
-    
-    //Update the surface
-    SDL_UpdateWindowSurface( gWindow );
 }

@@ -16,8 +16,6 @@
     #endif
 #elifdef SDL_PLATFORM_ANDROID
     // Android
-    #include <SDL.h>
-    #include <physfs.h>
 #elifdef SDL_PLATFORM_LINUX
     // linux
 #elifdef __SWITCH__
@@ -30,10 +28,9 @@
     // 3ds
 #endif
 
-#ifndef SDL_PLATFORM_ANDROID
-    #include <PhysFS/physfs.h>
-    #include <SDL3/SDL.h>
-#endif
+#include <PhysFS/physfs.h>
+#include <SDL3/SDL.h>
+// was an indef android, but we'll see if that's still needed
 
 inline std::string getBasePath(){
     #if defined(__SWITCH__) || defined(SDL_PLATFORM_3DS)
@@ -41,6 +38,10 @@ inline std::string getBasePath(){
     #elifdef SDL_PLATFORM_ANDROID
         return "";
     #endif
-    return std::string(SDL_GetBasePath());
+
+    const char* base = SDL_GetBasePath();
+
+    return base ? std::string(base) : std::string();
 }
+
 #endif
