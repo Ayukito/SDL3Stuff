@@ -55,20 +55,10 @@ namespace SDLPhysFS{
     }
 
     bool dummyRead(){
-        int res;
-
-        SDL_Log("Base Path: %s", getBasePath().c_str());
         // char* file = file_read("Assets/test.txt");
         // SDL_Log("file: %s", file);
         //ToDo: Use SDL RWops on Android instead of physfs, make filesystem wrapper. Use PHYSFS_mountMemory if using .zip to mount
-        std::string tmp = getBasePath() + "Assets";
-        res = PHYSFS_mount(tmp.c_str(), "/", 1);
-        SDL_Log("Mounted: %d", res);
-        
-        if (res == 0){
-            SDL_Log("PhysFS Error: %s", PHYSFS_getErrorByCode(PHYSFS_getLastErrorCode()));
-        }
-
+        // Assumes the caller has already mounted the Assets directory (see main()).
         bool testFileExists = false;
 
         testFileExists = PHYSFS_exists("/test.txt");
@@ -76,8 +66,6 @@ namespace SDLPhysFS{
 
         std::string txt = readFile("/test.txt");
         SDL_Log("Text: %s", txt.c_str());
-
-        PHYSFS_unmount(tmp.c_str());
 
         return testFileExists;
     }

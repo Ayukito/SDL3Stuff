@@ -45,7 +45,7 @@ ifeq ($(uname_S), Windows)
 	ifneq ($(DEBUG), true)
         CXXFLAGS+=-w -Wl,-subsystem,windows
 	endif
-    LDFLAGS := -lmingw32 -lSDL3 -lphysfs
+    LDFLAGS := -lmingw32 -lSDL3 -lSDL3_image -lphysfs
 	ifeq ($(DYNAMIC), true)
         #LDFLAGS += -static-libgcc -static-libstdc++ -Wl,-Bstatic -lstdc++ -lpthread -Wl,-Bdynamic
         # Above links statically to only the necessary things

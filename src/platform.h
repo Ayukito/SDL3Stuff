@@ -30,6 +30,7 @@
 
 #include <PhysFS/physfs.h>
 #include <SDL3/SDL.h>
+#include <SDL3_image/SDL_image.h>
 // was an indef android, but we'll see if that's still needed
 
 inline std::string getBasePath(){
