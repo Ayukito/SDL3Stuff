@@ -18,7 +18,7 @@
             "includePath": [
                 "${workspaceFolder}/**",
                 "${workspaceFolder}/deps/include/",
-                "${workspaceFolder}/deps/Windows/include/"
+                "C:/msys64/mingw64/include/"
             ],
             "defines": [],
             "compilerPath": "C:/msys64/mingw64/bin/g++.exe",
@@ -31,12 +31,13 @@
             "includePath": [
                 "${workspaceFolder}/deps/include/",
                 "${workspaceFolder}/deps/MacOS/include/",
-                "${workspaceFolder}/deps/Windows/include"
+                "/opt/homebrew/include/",
+                "/usr/local/include/"
             ],
             "defines": [],
             "cStandard": "c17",
             "cppStandard": "gnu++17",
-            "intelliSenseMode": "windows-gcc-x64"
+            "intelliSenseMode": "macos-clang-x64"
         }
     ],
     "version": 4

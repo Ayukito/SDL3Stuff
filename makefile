@@ -13,6 +13,7 @@ BUILDDIR=./build
 MACDIR=./deps/MacOS
 WINDIR=./deps/Windows
 LNXDIR=./deps/Linux
+MINGWBINDIR=C:/msys64/mingw64/bin
 
 INCDIR = -I./deps/include
 LIBDIR =
@@ -41,7 +42,10 @@ ifeq ($(uname_S), Windows)
     #LIBGL = -lGL -lglut
     build_target := all_windows
     STD := -std=c17
-    INCDIR += -I$(WINDIR)/include
+    # SDL3/SDL3_image come from MSYS2's mingw-w64 packages (pacman -S mingw-w64-x86_64-sdl3
+    # mingw-w64-x86_64-sdl3-image) rather than deps/Windows/include — g++ already searches its
+    # own mingw64/include by default, so no -I is needed for them. PhysFS has no MSYS2
+    # package, so its DLL is still vendored in deps/Windows/lib.
     LIBDIR += -L$(WINDIR)/lib
 	ifneq ($(DEBUG), true)
         CXXFLAGS+=-w -Wl,-subsystem,windows
@@ -98,6 +102,7 @@ mac: osxapp
 windows:
     ifeq ($(DYNAMIC), true)
 		cp $(WINDIR)/lib/*.dll $(BUILDDIR)
+		cp $(MINGWBINDIR)/SDL3.dll $(MINGWBINDIR)/SDL3_image.dll $(BUILDDIR)
     endif
 	cp -R ./Assets $(BUILDDIR)
 

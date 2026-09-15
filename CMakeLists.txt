@@ -73,10 +73,18 @@ if(ANDROID)
     )
 
 elseif(WIN32)
+    # SDL3/SDL3_image come from MSYS2's mingw-w64 packages (`pacman -S mingw-w64-x86_64-sdl3
+    # mingw-w64-x86_64-sdl3-image`) instead of vendored deps/Windows headers/libs — both ship
+    # a proper CMake config (confirmed: SDL3Config.cmake/SDL3_imageConfig.cmake under
+    # mingw64/lib/cmake/), so this is the same find_package() pattern as the macOS/Homebrew
+    # branch. MinGW64's g++ already searches its own include/lib dirs by default, so no
+    # explicit -I/-L is needed for them. PhysFS has no MSYS2 package, so it's still vendored.
+    find_package(SDL3 REQUIRED CONFIG)
+    find_package(SDL3_image REQUIRED CONFIG)
+
     set(WINDIR "${CMAKE_SOURCE_DIR}/deps/Windows")
-    target_include_directories(game PRIVATE "${WINDIR}/include")
     target_link_directories(game PRIVATE "${WINDIR}/lib")
-    target_link_libraries(game PRIVATE mingw32 SDL3 SDL3_image physfs)
+    target_link_libraries(game PRIVATE mingw32 SDL3::SDL3 SDL3_image::SDL3_image physfs)
 
     target_compile_options(game PRIVATE $<$<NOT:$<CONFIG:Debug>>:-w>)
     target_link_options(game PRIVATE $<$<NOT:$<CONFIG:Debug>>:-Wl,-subsystem,windows>)
@@ -89,9 +97,15 @@ elseif(WIN32)
             -lole32 -loleaut32 -lsetupapi -lshell32 -luser32 -lversion -lwinmm
         )
     else()
+        # PhysFS's DLL is still vendored; SDL3/SDL3_image's now come straight from the
+        # MSYS2 install via their imported CMake targets' resolved DLL locations.
         file(GLOB WIN_RUNTIME_DLLS "${WINDIR}/lib/*.dll")
         add_custom_command(TARGET game POST_BUILD
-            COMMAND ${CMAKE_COMMAND} -E copy_if_different ${WIN_RUNTIME_DLLS} "$<TARGET_FILE_DIR:game>"
+            COMMAND ${CMAKE_COMMAND} -E copy_if_different
+                    ${WIN_RUNTIME_DLLS}
+                    "$<TARGET_FILE:SDL3::SDL3>"
+                    "$<TARGET_FILE:SDL3_image::SDL3_image>"
+                    "$<TARGET_FILE_DIR:game>"
             COMMENT "Copying runtime DLLs"
         )
     endif()
