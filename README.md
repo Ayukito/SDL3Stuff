@@ -46,7 +46,7 @@ Both produce the same thing. CMake's the one I actually use; the makefile still 
 
 In VS Code: install the CMake Tools extension, open the folder, pick a preset from the status bar. Should just work.
 
-There's also a `windows-release-static`/`DYNAMIC=false` build that statically links everything (SDL3, SDL3_image, PhysFS, the C++ runtime) into a single standalone `game.exe` — no DLLs to ship alongside it.
+There's also `windows-release-static`/`windows-debug-static` presets (or `DYNAMIC=false` for the makefile) that statically link everything (SDL3, SDL3_image, PhysFS, the C++ runtime) into a single standalone `game.exe` — no DLLs to ship alongside it.
 
 ### macOS / Linux
 
